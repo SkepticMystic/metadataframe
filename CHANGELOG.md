@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.11](https://github.com/SkepticMystic/metadataframe/compare/0.0.10...0.0.11) (2021-09-23)
+
+
+### Features
+
+* :sparkles: Debug options ([b7af86d](https://github.com/SkepticMystic/metadataframe/commit/b7af86d4747bfc253b61f75e6a11c44ea6bc1b7b))
+
+
+### Bug Fixes
+
+* :bug: Fix [#1](https://github.com/SkepticMystic/metadataframe/issues/1) ([03dc529](https://github.com/SkepticMystic/metadataframe/commit/03dc5291b87424f7f1ec94fa34600715e60bfd40))
+
 ### [0.0.10](https://github.com/SkepticMystic/metadataframe/compare/0.0.9...0.0.10) (2021-09-23)
 
 ### [0.0.9](https://github.com/SkepticMystic/metadataframe/compare/0.0.8...0.0.9) (2021-09-23)
