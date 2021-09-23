@@ -45,5 +45,15 @@ export class MetadataframeSettings extends PluginSettingTab {
                     settings.undefinedValue = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('Add inherent file metadata')
+            .setDesc('Each file has alot of inherent metadata to it (besides the fields you add). Should metadataframe add these fields too? It can be alot, so there is the option to disable this behaviour')
+            .addToggle(toggle => toggle
+                .setValue(settings.addFileData)
+                .onChange(async (value) => {
+                    settings.addFileData = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 }

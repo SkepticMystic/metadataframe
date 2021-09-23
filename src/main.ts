@@ -8,13 +8,15 @@ interface MyPluginSettings {
 	defaultSavePath: string;
 	nullValue: string;
 	undefinedValue: string
+	addFileData: boolean
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
 	defaultSavePath: '',
 	nullValue: 'null',
-	undefinedValue: 'undefined'
+	undefinedValue: 'undefined',
+	addFileData: true
 }
 
 declare module "obsidian" {
