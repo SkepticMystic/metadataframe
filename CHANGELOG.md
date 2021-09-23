@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.9](https://github.com/SkepticMystic/metadataframe/compare/0.0.8...0.0.9) (2021-09-23)
+
+
+### Bug Fixes
+
+* :bug: Leah's bug. Not sure what caused it exactly, but something to do with regex ([7112f38](https://github.com/SkepticMystic/metadataframe/commit/7112f382caa1aec1d876388cfdbc2be6fa8b2d6f))
+
 ### [0.0.8](https://github.com/SkepticMystic/metadataframe/compare/0.0.7...0.0.8) (2021-09-23)
 
 ### [0.0.7](https://github.com/SkepticMystic/metadataframe/compare/0.0.6...0.0.7) (2021-09-23)
