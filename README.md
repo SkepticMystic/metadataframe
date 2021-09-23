@@ -5,7 +5,11 @@ With CSV in-hand, you can do any data analysis you want with it!
 
 Please note, you need [Dataview](https://github.com/blacksmithgu/obsidian-dataview) enabled for this plugin to grab metadata.
 
+## Useful Workflows
+
 Metadataframe pairs well with death-au's [CSV Editor plugin](https://github.com/deathau/csv-obsidian).
+
+One can also use Vinadon's [Advanced URIs plugin](https://github.com/Vinzent03/obsidian-advanced-uri) to run the `Write Metadataframe` command from outside of Obsidian. This can make it easier and faster to get data into another app, like Python.
 
 ## Settings
 
