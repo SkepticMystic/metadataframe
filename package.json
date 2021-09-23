@@ -1,6 +1,6 @@
 {
   "name": "metadataframe",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Write a CSV file to disk of all metadata fields from all files.",
   "main": "main.js",
   "scripts": {
