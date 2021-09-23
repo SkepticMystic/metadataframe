@@ -7650,7 +7650,7 @@ var MyPlugin = /** @class */ (function (_super) {
         var actualNullValue = stringToNullOrUndefined(settings.nullValue);
         files.forEach(function (file, i) {
             // Add a new object for each file
-            yamldf.push({});
+            yamldf.push({ file: { path: file.path } });
             // Grab the dv metadata cache for it
             if (!_this.app.plugins.plugins.dataview.api) {
                 new obsidian.Notice('Dataview must be enabled');

@@ -62,14 +62,14 @@ export default class MyPlugin extends Plugin {
 		const { settings } = this
 
 		const files = this.app.vault.getMarkdownFiles()
-		let yamldf: { [key: string]: string | number }[] = []
+		let yamldf: { [key: string]: any }[] = []
 		let uniqueKeys: string[] = [];
 
 		let actualNullValue = stringToNullOrUndefined(settings.nullValue)
 
 		files.forEach((file, i) => {
 			// Add a new object for each file
-			yamldf.push({});
+			yamldf.push({ file: { path: file.path } });
 
 			// Grab the dv metadata cache for it
 			if (!this.app.plugins.plugins.dataview.api) {
