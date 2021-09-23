@@ -7519,6 +7519,16 @@ function stringToNullOrUndefined(current) {
         return current;
     }
 }
+function debug(settings, log) {
+    if (settings.debugMode) {
+        console.log(log);
+    }
+}
+// export function superDebug(settings: Settings, log: any): void {
+//     if (settings.superDebugMode) {
+//         console.log(log);
+//     }
+// }
 
 var MetadataframeSettings = /** @class */ (function (_super) {
     __extends(MetadataframeSettings, _super);
@@ -7584,16 +7594,33 @@ var MetadataframeSettings = /** @class */ (function (_super) {
                 }
             });
         }); }); });
+        new obsidian.Setting(containerEl)
+            .setName('Debug Mode')
+            .setDesc('Enabling this will turn on a bunch of console logs when running the `Write Metadataframe` command.')
+            .addToggle(function (toggle) { return toggle
+            .setValue(settings.debugMode)
+            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        settings.debugMode = value;
+                        return [4 /*yield*/, this.plugin.saveSettings()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); }); });
     };
     return MetadataframeSettings;
 }(obsidian.PluginSettingTab));
 
 var DEFAULT_SETTINGS = {
-    mySetting: 'default',
     defaultSavePath: '/',
     nullValue: 'null',
     undefinedValue: 'undefined',
-    addFileData: true
+    addFileData: true,
+    debugMode: false
 };
 var MyPlugin = /** @class */ (function (_super) {
     __extends(MyPlugin, _super);
@@ -7649,6 +7676,7 @@ var MyPlugin = /** @class */ (function (_super) {
         var uniqueKeys = [];
         var actualNullValue = stringToNullOrUndefined(settings.nullValue);
         files.forEach(function (file, i) {
+            debug(settings, { file: file });
             // Add a new object for each file
             yamldf.push({ file: { path: file.path } });
             // Grab the dv metadata cache for it
@@ -7662,10 +7690,12 @@ var MyPlugin = /** @class */ (function (_super) {
                 // Process values
                 if (key !== 'position') {
                     if (key !== 'file' || settings.addFileData) {
+                        var value = cache[key];
+                        var arrValues = [value].flat(4);
+                        debug(settings, { key: key, value: value });
                         // Collect unique keys for later
                         if (!uniqueKeys.includes(key))
                             uniqueKeys.push(key);
-                        var value = cache[key];
                         if (!value) { // Null values
                             yamldf[i][key] = actualNullValue;
                         }
@@ -7688,20 +7718,18 @@ var MyPlugin = /** @class */ (function (_super) {
                                 yamldf[i][key] = value;
                             }
                         }
+                        else if ((_a = arrValues === null || arrValues === void 0 ? void 0 : arrValues[0]) === null || _a === void 0 ? void 0 : _a.ts) { // Dates
+                            yamldf[i][key] = arrValues.map(function (val) { return val === null || val === void 0 ? void 0 : val.ts; }).join(', ');
+                        }
+                        else if ((_b = arrValues === null || arrValues === void 0 ? void 0 : arrValues[0]) === null || _b === void 0 ? void 0 : _b.path) { // Link objects
+                            yamldf[i][key] = arrValues.map(function (val) { return "[[" + (val === null || val === void 0 ? void 0 : val.path) + "]]"; }).join(', ');
+                        }
                         else if (Object.prototype.toString.call(value) === '[object Object]') {
                             yamldf[i][key] = value;
                         }
                         else {
-                            var arrValues = [value].flat(4);
-                            if ((_a = arrValues === null || arrValues === void 0 ? void 0 : arrValues[0]) === null || _a === void 0 ? void 0 : _a.ts) { //Dates
-                                yamldf[i][key] = arrValues.map(function (val) { return val === null || val === void 0 ? void 0 : val.ts; }).join(', ');
-                            }
-                            else if ((_b = arrValues === null || arrValues === void 0 ? void 0 : arrValues[0]) === null || _b === void 0 ? void 0 : _b.path) { // Link objects
-                                yamldf[i][key] = arrValues.map(function (val) { return "[[" + (val === null || val === void 0 ? void 0 : val.path) + "]]"; }).join(', ');
-                            }
-                            else { // Arrays are joined into strings
-                                yamldf[i][key] = arrValues.join(', ');
-                            }
+                            // Miscellaneous arrays are joined into strings
+                            yamldf[i][key] = arrValues.join(', ');
                         }
                     }
                 }

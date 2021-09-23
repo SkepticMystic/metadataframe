@@ -1,23 +1,23 @@
 import { Parser, transforms } from 'json2csv';
 import { normalizePath, Notice, Plugin } from 'obsidian';
 import { dropHeaderOrAlias, splitLinksRegex } from 'src/Constants';
-import { stringToNullOrUndefined } from 'src/Utility';
+import { debug, stringToNullOrUndefined } from 'src/Utility';
 import { MetadataframeSettings } from './Settings';
 
-interface MyPluginSettings {
-	mySetting: string;
+export interface Settings {
 	defaultSavePath: string;
 	nullValue: string;
 	undefinedValue: string
-	addFileData: boolean
+	addFileData: boolean;
+	debugMode: boolean;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default',
+const DEFAULT_SETTINGS: Settings = {
 	defaultSavePath: '/',
 	nullValue: 'null',
 	undefinedValue: 'undefined',
-	addFileData: true
+	addFileData: true,
+	debugMode: false,
 }
 
 declare module "obsidian" {
@@ -31,7 +31,7 @@ declare module "obsidian" {
 }
 
 export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+	settings: Settings;
 
 	async onload() {
 		console.log('Loading Metadataframe plugin');
@@ -68,6 +68,7 @@ export default class MyPlugin extends Plugin {
 		let actualNullValue = stringToNullOrUndefined(settings.nullValue)
 
 		files.forEach((file, i) => {
+			debug(settings, { file })
 			// Add a new object for each file
 			yamldf.push({ file: { path: file.path } });
 
@@ -78,15 +79,18 @@ export default class MyPlugin extends Plugin {
 			}
 			const cache = this.app.plugins.plugins.dataview.api.page(file.path);
 			Object.keys(cache).forEach(key => {
-
 				// Process values
 				if (key !== 'position') {
-
 					if (key !== 'file' || settings.addFileData) {
+						const value = cache[key]
+						const arrValues = [value].flat(4)
+
+						debug(settings, { key, value })
+						
 						// Collect unique keys for later
 						if (!uniqueKeys.includes(key)) uniqueKeys.push(key);
 
-						const value = cache[key]
+
 
 						if (!value) { // Null values
 							yamldf[i][key] = actualNullValue
@@ -109,18 +113,18 @@ export default class MyPlugin extends Plugin {
 								yamldf[i][key] = value
 							}
 
-						} else if (Object.prototype.toString.call(value) === '[object Object]') {
+						} else if (arrValues?.[0]?.ts) { // Dates
+							yamldf[i][key] = arrValues.map(val => val?.ts).join(', ')
+						} else if (arrValues?.[0]?.path) { // Link objects
+							yamldf[i][key] = arrValues.map(val => `[[${val?.path}]]`).join(', ')
+						}
+
+						else if (Object.prototype.toString.call(value) === '[object Object]') {
 							yamldf[i][key] = value
 						} else {
-							const arrValues = [value].flat(4)
+							// Miscellaneous arrays are joined into strings
+							yamldf[i][key] = arrValues.join(', ')
 
-							if (arrValues?.[0]?.ts) { //Dates
-								yamldf[i][key] = arrValues.map(val => val?.ts).join(', ')
-							} else if (arrValues?.[0]?.path) { // Link objects
-								yamldf[i][key] = arrValues.map(val => `[[${val?.path}]]`).join(', ')
-							} else { // Arrays are joined into strings
-								yamldf[i][key] = arrValues.join(', ')
-							}
 						}
 					}
 				}

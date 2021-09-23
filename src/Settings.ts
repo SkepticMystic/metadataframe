@@ -45,5 +45,15 @@ export class MetadataframeSettings extends PluginSettingTab {
                     settings.addFileData = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('Debug Mode')
+            .setDesc('Enabling this will turn on a bunch of console logs when running the `Write Metadataframe` command.')
+            .addToggle(toggle => toggle
+                .setValue(settings.debugMode)
+                .onChange(async (value) => {
+                    settings.debugMode = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 }
