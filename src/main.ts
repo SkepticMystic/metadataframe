@@ -1,4 +1,5 @@
-import { Parser } from 'json2csv';
+import { dropHeaderOrAlias, splitLinksRegex } from 'Constants';
+import { Parser, transforms } from 'json2csv';
 import { normalizePath, Notice, Plugin } from 'obsidian';
 import { stringToNullOrUndefined } from 'src/Utility';
 import { MetadataframeSettings } from './Settings';
@@ -68,7 +69,7 @@ export default class MyPlugin extends Plugin {
 
 		files.forEach((file, i) => {
 			// Add a new object for each file
-			yamldf.push({ file: file.path });
+			yamldf.push({});
 
 			// Grab the dv metadata cache for it
 			if (!this.app.plugins.plugins.dataview.api) {
@@ -79,22 +80,42 @@ export default class MyPlugin extends Plugin {
 			Object.keys(cache).forEach(key => {
 
 				// Process values
-				if (key !== 'file' && key !== 'position') {
-					// Collect unique keys for later
-					if (!uniqueKeys.includes(key)) uniqueKeys.push(key);
+				if (key !== 'position') {
 
-					const value = cache[key]
+					if (key !== 'file' || settings.addFileData) {
+						// Collect unique keys for later
+						if (!uniqueKeys.includes(key)) uniqueKeys.push(key);
 
-					if (!value) { // Null values
-						yamldf[i][key] = actualNullValue
-					} else if (typeof value === 'string') { // String values
-						yamldf[i][key] = value
-					} else if (value.ts) { //Dates
-						yamldf[i][key] = value.ts
-					} else if (Array.isArray(value)) { // Arrays are joined into strings
-						yamldf[i][key] = value.join(', ')
-					} else if (value.path) { // Link objects
-						yamldf[i][key] = value.path
+						const value = cache[key]
+
+						if (!value) { // Null values
+							yamldf[i][key] = actualNullValue
+						} else if (typeof value === 'string') { // String values
+
+							const splits = value.match(splitLinksRegex);
+							if (splits !== null) {
+								const strs = splits.map((link) =>
+									`[[${link.match(dropHeaderOrAlias)[1]}]]`
+								).join(', ');
+								yamldf[i][key] = strs
+							}
+							else {
+								yamldf[i][key] = value
+							}
+
+						} else if (Object.prototype.toString.call(value) === '[object Object]') {
+							yamldf[i][key] = value
+						} else {
+							const arrValues = [value].flat(4)
+
+							if (arrValues?.[0]?.ts) { //Dates
+								yamldf[i][key] = arrValues.map(val => val?.ts).join(', ')
+							} else if (arrValues?.[0]?.path) { // Link objects
+								yamldf[i][key] = arrValues.map(val => `[[${val?.path}]]`).join(', ')
+							} else { // Arrays are joined into strings
+								yamldf[i][key] = arrValues.join(', ')
+							}
+						}
 					}
 				}
 			})
@@ -117,7 +138,7 @@ export default class MyPlugin extends Plugin {
 		const { settings } = this;
 		const defaultValue = settings.nullValue
 
-		const opts = { defaultValue };
+		const opts = { defaultValue, transforms: [transforms.flatten()] };
 
 		let csv = '';
 		try {

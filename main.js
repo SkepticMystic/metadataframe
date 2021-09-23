@@ -71,6 +71,9 @@ function __generator(thisArg, body) {
     }
 }
 
+var splitLinksRegex = new RegExp(/\[\[(.+?)\]\]/g);
+var dropHeaderOrAlias = new RegExp(/\[\[([^#|]+)\]\]/);
+
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 function createCommonjsModule(fn) {
@@ -7581,6 +7584,23 @@ var MetadataframeSettings = /** @class */ (function (_super) {
                 }
             });
         }); }); });
+        new obsidian.Setting(containerEl)
+            .setName('Add inherent file metadata')
+            .setDesc('Each file has alot of inherent metadata to it (besides the fields you add). Should metadataframe add these fields too? It can be alot, so there is the option to disable this behaviour')
+            .addToggle(function (toggle) { return toggle
+            .setValue(settings.addFileData)
+            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        settings.addFileData = value;
+                        return [4 /*yield*/, this.plugin.saveSettings()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); }); });
     };
     return MetadataframeSettings;
 }(obsidian.PluginSettingTab));
@@ -7589,7 +7609,8 @@ var DEFAULT_SETTINGS = {
     mySetting: 'default',
     defaultSavePath: '',
     nullValue: 'null',
-    undefinedValue: 'undefined'
+    undefinedValue: 'undefined',
+    addFileData: true
 };
 var MyPlugin = /** @class */ (function (_super) {
     __extends(MyPlugin, _super);
@@ -7646,7 +7667,7 @@ var MyPlugin = /** @class */ (function (_super) {
         var actualNullValue = stringToNullOrUndefined(settings.nullValue);
         files.forEach(function (file, i) {
             // Add a new object for each file
-            yamldf.push({ file: file.path });
+            yamldf.push({});
             // Grab the dv metadata cache for it
             if (!_this.app.plugins.plugins.dataview.api) {
                 new obsidian.Notice('Dataview must be enabled');
@@ -7654,26 +7675,44 @@ var MyPlugin = /** @class */ (function (_super) {
             }
             var cache = _this.app.plugins.plugins.dataview.api.page(file.path);
             Object.keys(cache).forEach(function (key) {
+                var _a, _b;
                 // Process values
-                if (key !== 'file' && key !== 'position') {
-                    // Collect unique keys for later
-                    if (!uniqueKeys.includes(key))
-                        uniqueKeys.push(key);
-                    var value = cache[key];
-                    if (!value) { // Null values
-                        yamldf[i][key] = actualNullValue;
-                    }
-                    else if (typeof value === 'string') { // String values
-                        yamldf[i][key] = value;
-                    }
-                    else if (value.ts) { //Dates
-                        yamldf[i][key] = value.ts;
-                    }
-                    else if (Array.isArray(value)) { // Arrays are joined into strings
-                        yamldf[i][key] = value.join(', ');
-                    }
-                    else if (value.path) { // Link objects
-                        yamldf[i][key] = value.path;
+                if (key !== 'position') {
+                    if (key !== 'file' || settings.addFileData) {
+                        // Collect unique keys for later
+                        if (!uniqueKeys.includes(key))
+                            uniqueKeys.push(key);
+                        var value = cache[key];
+                        if (!value) { // Null values
+                            yamldf[i][key] = actualNullValue;
+                        }
+                        else if (typeof value === 'string') { // String values
+                            var splits = value.match(splitLinksRegex);
+                            if (splits !== null) {
+                                var strs = splits.map(function (link) {
+                                    return "[[" + link.match(dropHeaderOrAlias)[1] + "]]";
+                                }).join(', ');
+                                yamldf[i][key] = strs;
+                            }
+                            else {
+                                yamldf[i][key] = value;
+                            }
+                        }
+                        else if (Object.prototype.toString.call(value) === '[object Object]') {
+                            yamldf[i][key] = value;
+                        }
+                        else {
+                            var arrValues = [value].flat(4);
+                            if ((_a = arrValues === null || arrValues === void 0 ? void 0 : arrValues[0]) === null || _a === void 0 ? void 0 : _a.ts) { //Dates
+                                yamldf[i][key] = arrValues.map(function (val) { return val === null || val === void 0 ? void 0 : val.ts; }).join(', ');
+                            }
+                            else if ((_b = arrValues === null || arrValues === void 0 ? void 0 : arrValues[0]) === null || _b === void 0 ? void 0 : _b.path) { // Link objects
+                                yamldf[i][key] = arrValues.map(function (val) { return "[[" + (val === null || val === void 0 ? void 0 : val.path) + "]]"; }).join(', ');
+                            }
+                            else { // Arrays are joined into strings
+                                yamldf[i][key] = arrValues.join(', ');
+                            }
+                        }
                     }
                 }
             });
@@ -7699,7 +7738,7 @@ var MyPlugin = /** @class */ (function (_super) {
                     case 0:
                         settings = this.settings;
                         defaultValue = settings.nullValue;
-                        opts = { defaultValue: defaultValue };
+                        opts = { defaultValue: defaultValue, transforms: [json2csv_umd.transforms.flatten()] };
                         csv = '';
                         _a.label = 1;
                     case 1:
