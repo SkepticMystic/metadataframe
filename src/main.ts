@@ -1,5 +1,6 @@
+import { Parser } from 'json2csv';
 import { normalizePath, Notice, Plugin } from 'obsidian';
-import { arrayToCSV, stringToNullOrUndefined } from 'src/Utility';
+import { stringToNullOrUndefined } from 'src/Utility';
 import { MetadataframeSettings } from './Settings';
 
 interface MyPluginSettings {
@@ -44,6 +45,7 @@ export default class MyPlugin extends Plugin {
 					await this.writeMetadataframe(jsDF);
 				} catch (error) {
 					new Notice('An error occured. Please check the console.')
+					console.log(error)
 				}
 			}
 		});
@@ -110,23 +112,32 @@ export default class MyPlugin extends Plugin {
 	}
 
 	async writeMetadataframe(jsDF: { [key: string]: string | number }[]) {
-		const csv = arrayToCSV(jsDF)
-		console.log(csv)
+		const { settings } = this;
+		const defaultValue = settings.nullValue
 
-		if (this.settings.defaultSavePath === '') {
-			new Notice('Please choose a path to save to in settings')
+		const opts = { defaultValue };
 
-		} else {
-			try {
-				const savePath = normalizePath(this.settings.defaultSavePath)
-				const now = window.moment().format("YYYY-MM-DD HHmmss");
+		let csv = '';
+		try {
+			const parser = new Parser(opts);
+			csv = parser.parse(jsDF);
 
-				await this.app.vault.createBinary(`${savePath} ${now}.csv`, csv)
-				new Notice('Write Metadataframe complete')
+			if (settings.defaultSavePath === '' && csv !== '') {
+				new Notice('Please choose a path to save to in settings')
+			} else {
+				try {
+					const savePath = normalizePath(settings.defaultSavePath)
+					const now = window.moment().format("YYYY-MM-DD HHmmss");
 
-			} catch (error) {
-				new Notice('File already exists')
+					await this.app.vault.createBinary(`${savePath} ${now}.csv`, csv)
+					new Notice('Write Metadataframe complete')
+
+				} catch (error) {
+					new Notice('File already exists')
+				}
 			}
+		} catch (err) {
+			console.error(err);
 		}
 	}
 
