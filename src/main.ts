@@ -1,6 +1,6 @@
-import { dropHeaderOrAlias, splitLinksRegex } from 'Constants';
 import { Parser, transforms } from 'json2csv';
 import { normalizePath, Notice, Plugin } from 'obsidian';
+import { dropHeaderOrAlias, splitLinksRegex } from 'src/Constants';
 import { stringToNullOrUndefined } from 'src/Utility';
 import { MetadataframeSettings } from './Settings';
 
@@ -94,8 +94,14 @@ export default class MyPlugin extends Plugin {
 
 							const splits = value.match(splitLinksRegex);
 							if (splits !== null) {
-								const strs = splits.map((link) =>
-									`[[${link.match(dropHeaderOrAlias)[1]}]]`
+								const strs = splits.map((link) => {
+									const dropped = link.match(dropHeaderOrAlias)?.[1];
+									if (dropped) {
+										return `[[${dropped}]]`
+									} else {
+										return link
+									}
+								}
 								).join(', ');
 								yamldf[i][key] = strs
 							}

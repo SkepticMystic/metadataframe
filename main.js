@@ -71,9 +71,6 @@ function __generator(thisArg, body) {
     }
 }
 
-var splitLinksRegex = new RegExp(/\[\[(.+?)\]\]/g);
-var dropHeaderOrAlias = new RegExp(/\[\[([^#|]+)\]\]/);
-
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 function createCommonjsModule(fn) {
@@ -7508,6 +7505,9 @@ var json2csv_umd = createCommonjsModule(function (module, exports) {
 }));
 });
 
+var splitLinksRegex = new RegExp(/\[\[(.*?)\]\]/g);
+var dropHeaderOrAlias = new RegExp(/\[\[([^#|]*)\]\]/);
+
 function stringToNullOrUndefined(current) {
     if (current === 'undefined') {
         return undefined;
@@ -7673,7 +7673,14 @@ var MyPlugin = /** @class */ (function (_super) {
                             var splits = value.match(splitLinksRegex);
                             if (splits !== null) {
                                 var strs = splits.map(function (link) {
-                                    return "[[" + link.match(dropHeaderOrAlias)[1] + "]]";
+                                    var _a;
+                                    var dropped = (_a = link.match(dropHeaderOrAlias)) === null || _a === void 0 ? void 0 : _a[1];
+                                    if (dropped) {
+                                        return "[[" + dropped + "]]";
+                                    }
+                                    else {
+                                        return link;
+                                    }
                                 }).join(', ');
                                 yamldf[i][key] = strs;
                             }
