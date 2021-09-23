@@ -1,13 +1,19 @@
-import { App, normalizePath, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { normalizePath, Notice, Plugin } from 'obsidian';
+import { arrayToCSV, stringToNullOrUndefined } from 'src/Utility';
+import { MetadataframeSettings } from './Settings';
 
 interface MyPluginSettings {
 	mySetting: string;
 	defaultSavePath: string;
+	nullValue: string;
+	undefinedValue: string
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
-	defaultSavePath: ''
+	defaultSavePath: '',
+	nullValue: 'null',
+	undefinedValue: 'undefined'
 }
 
 declare module "obsidian" {
@@ -45,21 +51,16 @@ export default class MyPlugin extends Plugin {
 		this.addSettingTab(new MetadataframeSettings(this.app, this));
 	}
 
-	// Source: https://stackoverflow.com/questions/11257062/converting-json-object-to-csv-format-in-javascript
-	arrayToCSV(objArray: { [key: string]: string | number }[]) {
-		const array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
-		let str = `${Object.keys(array[0]).map(value => `"${value}"`).join(",")}` + '\r\n';
 
-		return array.reduce((str: string, next: string) => {
-			str += `${Object.values(next).map(value => `"${value}"`).join(",")}` + '\r\n';
-			return str;
-		}, str);
-	}
 
 	createJSDF() {
+		const { settings } = this
+
 		const files = this.app.vault.getMarkdownFiles()
 		let yamldf: { [key: string]: string | number }[] = []
 		let uniqueKeys: string[] = [];
+
+		let actualNullValue = stringToNullOrUndefined(settings.nullValue)
 
 		files.forEach((file, i) => {
 			// Add a new object for each file
@@ -72,15 +73,16 @@ export default class MyPlugin extends Plugin {
 			}
 			const cache = this.app.plugins.plugins.dataview.api.page(file.path);
 			Object.keys(cache).forEach(key => {
-				// Collect unique keys for later
-				if (!uniqueKeys.includes(key)) uniqueKeys.push(key);
 
 				// Process values
 				if (key !== 'file' && key !== 'position') {
+					// Collect unique keys for later
+					if (!uniqueKeys.includes(key)) uniqueKeys.push(key);
+
 					const value = cache[key]
 
 					if (!value) { // Null values
-						yamldf[i][key] = null
+						yamldf[i][key] = actualNullValue
 					} else if (typeof value === 'string') { // String values
 						yamldf[i][key] = value
 					} else if (value.ts) { //Dates
@@ -94,23 +96,21 @@ export default class MyPlugin extends Plugin {
 			})
 		})
 
+		let actualUndefinedValue = stringToNullOrUndefined(settings.undefinedValue);
 
-		// Make the jagged array square
-		/// If a file doesn't have all fields, then add those fields as null
-		/// Maybe use undefined instead?
-		Object.keys(yamldf).forEach((file, i) => {
+		for (let i = 0; i < Object.keys(yamldf).length; i++) {
 			uniqueKeys.forEach(key => {
 				if (yamldf[i][key] === undefined) {
-					yamldf[i][key] = null
+					yamldf[i][key] = actualUndefinedValue
 				}
 			})
-		})
+		}
 
 		return yamldf
 	}
 
 	async writeMetadataframe(jsDF: { [key: string]: string | number }[]) {
-		const csv = this.arrayToCSV(jsDF)
+		const csv = arrayToCSV(jsDF)
 		console.log(csv)
 
 		if (this.settings.defaultSavePath === '') {
@@ -140,32 +140,5 @@ export default class MyPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class MetadataframeSettings extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { settings } = this.plugin
-		let { containerEl } = this;
-
-		containerEl.empty();
-		containerEl.createEl('h2', { text: 'Settings for Metadataframe.' });
-
-		new Setting(containerEl)
-			.setName('Default save path')
-			.setDesc('The full file path to save the metadataframe to. Don\'t include the file extension. For example, this is a correct file path: SubFolder/metadataframe. Use "/" to save to the root of your vault.')
-			.addText(text => text
-				.setValue(settings.defaultSavePath)
-				.onChange(async (value) => {
-					settings.defaultSavePath = value;
-					await this.plugin.saveSettings();
-				}));
 	}
 }

@@ -71,9 +71,100 @@ function __generator(thisArg, body) {
     }
 }
 
+// Source: https://stackoverflow.com/questions/11257062/converting-json-object-to-csv-format-in-javascript
+function arrayToCSV(objArray) {
+    var array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
+    var str = "" + Object.keys(array[0]).map(function (value) { return "\"" + value + "\""; }).join(",") + '\r\n';
+    return array.reduce(function (str, next) {
+        str += "" + Object.values(next).map(function (value) { return "\"" + value + "\""; }).join(",") + '\r\n';
+        return str;
+    }, str);
+}
+function stringToNullOrUndefined(current) {
+    if (current === 'undefined') {
+        return undefined;
+    }
+    else if (current === 'null') {
+        return null;
+    }
+    else {
+        return current;
+    }
+}
+
+var MetadataframeSettings = /** @class */ (function (_super) {
+    __extends(MetadataframeSettings, _super);
+    function MetadataframeSettings(app, plugin) {
+        var _this = _super.call(this, app, plugin) || this;
+        _this.plugin = plugin;
+        return _this;
+    }
+    MetadataframeSettings.prototype.display = function () {
+        var _this = this;
+        var settings = this.plugin.settings;
+        var containerEl = this.containerEl;
+        containerEl.empty();
+        containerEl.createEl('h2', { text: 'Settings for Metadataframe.' });
+        new obsidian.Setting(containerEl)
+            .setName('Default save path')
+            .setDesc('The full file path to save the metadataframe to. Don\'t include the file extension. For example, this is a correct file path: SubFolder/metadataframe. Use "/" to save to the root of your vault.')
+            .addText(function (text) { return text
+            .setValue(settings.defaultSavePath)
+            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        settings.defaultSavePath = value;
+                        return [4 /*yield*/, this.plugin.saveSettings()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); }); });
+        new obsidian.Setting(containerEl)
+            .setName('Null value')
+            .setDesc('If a file has a field, but no value for it, what should the null value be? Default is \'null\'. You don\'t have to use quotes.')
+            .addText(function (text) { return text
+            .setValue(settings.nullValue)
+            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        settings.nullValue = value;
+                        return [4 /*yield*/, this.plugin.saveSettings()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); }); });
+        new obsidian.Setting(containerEl)
+            .setName('Undefined value')
+            .setDesc('If a file is missing a field (no key or value), then the plugin still has to assign it a value for that field to make the dataframe square. What value should it give to undefined field values? Default is \'undefined\'. You don\'t have to use quotes. This value can be the same as the null value above.')
+            .addText(function (text) { return text
+            .setValue(settings.undefinedValue)
+            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        settings.undefinedValue = value;
+                        return [4 /*yield*/, this.plugin.saveSettings()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); }); });
+    };
+    return MetadataframeSettings;
+}(obsidian.PluginSettingTab));
+
 var DEFAULT_SETTINGS = {
     mySetting: 'default',
-    defaultSavePath: ''
+    defaultSavePath: '',
+    nullValue: 'null',
+    undefinedValue: 'undefined'
 };
 var MyPlugin = /** @class */ (function (_super) {
     __extends(MyPlugin, _super);
@@ -120,20 +211,13 @@ var MyPlugin = /** @class */ (function (_super) {
             });
         });
     };
-    // Source: https://stackoverflow.com/questions/11257062/converting-json-object-to-csv-format-in-javascript
-    MyPlugin.prototype.arrayToCSV = function (objArray) {
-        var array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
-        var str = "" + Object.keys(array[0]).map(function (value) { return "\"" + value + "\""; }).join(",") + '\r\n';
-        return array.reduce(function (str, next) {
-            str += "" + Object.values(next).map(function (value) { return "\"" + value + "\""; }).join(",") + '\r\n';
-            return str;
-        }, str);
-    };
     MyPlugin.prototype.createJSDF = function () {
         var _this = this;
+        var settings = this.settings;
         var files = this.app.vault.getMarkdownFiles();
         var yamldf = [];
         var uniqueKeys = [];
+        var actualNullValue = stringToNullOrUndefined(settings.nullValue);
         files.forEach(function (file, i) {
             // Add a new object for each file
             yamldf.push({ file: file.path });
@@ -144,14 +228,14 @@ var MyPlugin = /** @class */ (function (_super) {
             }
             var cache = _this.app.plugins.plugins.dataview.api.page(file.path);
             Object.keys(cache).forEach(function (key) {
-                // Collect unique keys for later
-                if (!uniqueKeys.includes(key))
-                    uniqueKeys.push(key);
                 // Process values
                 if (key !== 'file' && key !== 'position') {
+                    // Collect unique keys for later
+                    if (!uniqueKeys.includes(key))
+                        uniqueKeys.push(key);
                     var value = cache[key];
                     if (!value) { // Null values
-                        yamldf[i][key] = null;
+                        yamldf[i][key] = actualNullValue;
                     }
                     else if (typeof value === 'string') { // String values
                         yamldf[i][key] = value;
@@ -168,16 +252,17 @@ var MyPlugin = /** @class */ (function (_super) {
                 }
             });
         });
-        // Make the jagged array square
-        /// If a file doesn't have all fields, then add those fields as null
-        /// Maybe use undefined instead?
-        Object.keys(yamldf).forEach(function (file, i) {
+        var actualUndefinedValue = stringToNullOrUndefined(settings.undefinedValue);
+        var _loop_1 = function (i) {
             uniqueKeys.forEach(function (key) {
                 if (yamldf[i][key] === undefined) {
-                    yamldf[i][key] = null;
+                    yamldf[i][key] = actualUndefinedValue;
                 }
             });
-        });
+        };
+        for (var i = 0; i < Object.keys(yamldf).length; i++) {
+            _loop_1(i);
+        }
         return yamldf;
     };
     MyPlugin.prototype.writeMetadataframe = function (jsDF) {
@@ -186,7 +271,7 @@ var MyPlugin = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        csv = this.arrayToCSV(jsDF);
+                        csv = arrayToCSV(jsDF);
                         console.log(csv);
                         if (!(this.settings.defaultSavePath === '')) return [3 /*break*/, 1];
                         new obsidian.Notice('Please choose a path to save to in settings');
@@ -243,38 +328,5 @@ var MyPlugin = /** @class */ (function (_super) {
     };
     return MyPlugin;
 }(obsidian.Plugin));
-var MetadataframeSettings = /** @class */ (function (_super) {
-    __extends(MetadataframeSettings, _super);
-    function MetadataframeSettings(app, plugin) {
-        var _this = _super.call(this, app, plugin) || this;
-        _this.plugin = plugin;
-        return _this;
-    }
-    MetadataframeSettings.prototype.display = function () {
-        var _this = this;
-        var settings = this.plugin.settings;
-        var containerEl = this.containerEl;
-        containerEl.empty();
-        containerEl.createEl('h2', { text: 'Settings for Metadataframe.' });
-        new obsidian.Setting(containerEl)
-            .setName('Default save path')
-            .setDesc('The full file path to save the metadataframe to. Don\'t include the file extension. For example, this is a correct file path: SubFolder/metadataframe. Use "/" to save to the root of your vault.')
-            .addText(function (text) { return text
-            .setValue(settings.defaultSavePath)
-            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        settings.defaultSavePath = value;
-                        return [4 /*yield*/, this.plugin.saveSettings()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        }); }); });
-    };
-    return MetadataframeSettings;
-}(obsidian.PluginSettingTab));
 
 module.exports = MyPlugin;

@@ -8,3 +8,13 @@ export function arrayToCSV(objArray: { [key: string]: string | number }[]) {
         return str;
     }, str);
 }
+
+export function stringToNullOrUndefined(current: string) {
+    if (current === 'undefined') {
+        return undefined;
+    } else if (current === 'null') {
+        return null
+    } else {
+        return current
+    }
+}
