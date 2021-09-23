@@ -7532,7 +7532,7 @@ var MetadataframeSettings = /** @class */ (function (_super) {
         var settings = this.plugin.settings;
         var containerEl = this.containerEl;
         containerEl.empty();
-        containerEl.createEl('h2', { text: 'Settings for Metadataframe.' });
+        containerEl.createEl('h2', { text: 'Settings for Metadataframe' });
         new obsidian.Setting(containerEl)
             .setName('Default save path')
             .setDesc('The full file path to save the metadataframe to. Don\'t include the file extension. For example, this is a correct file path: SubFolder/metadataframe. Use "/" to save to the root of your vault.')
@@ -7552,7 +7552,7 @@ var MetadataframeSettings = /** @class */ (function (_super) {
         }); }); });
         new obsidian.Setting(containerEl)
             .setName('Null value')
-            .setDesc('If a file has a field, but no value for it, what should the null value be? Default is \'null\'. You don\'t have to use quotes.')
+            .setDesc('What should the default value be for missing field values? Default is \'null\'. Don\'t use quotes, just enter the value.')
             .addText(function (text) { return text
             .setValue(settings.nullValue)
             .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
@@ -7568,25 +7568,8 @@ var MetadataframeSettings = /** @class */ (function (_super) {
             });
         }); }); });
         new obsidian.Setting(containerEl)
-            .setName('Undefined value')
-            .setDesc('If a file is missing a field (no key or value), then the plugin still has to assign it a value for that field to make the dataframe square. What value should it give to undefined field values? Default is \'undefined\'. You don\'t have to use quotes. This value can be the same as the null value above.')
-            .addText(function (text) { return text
-            .setValue(settings.undefinedValue)
-            .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        settings.undefinedValue = value;
-                        return [4 /*yield*/, this.plugin.saveSettings()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        }); }); });
-        new obsidian.Setting(containerEl)
             .setName('Add inherent file metadata')
-            .setDesc('Each file has alot of inherent metadata to it (besides the fields you add). Should metadataframe add these fields too? It can be alot, so there is the option to disable this behaviour')
+            .setDesc('Each file has alot of inherent metadata to it (besides the fields you add). Should metadataframe add these fields too? It can be alot, so there is the option to disable this behaviour.')
             .addToggle(function (toggle) { return toggle
             .setValue(settings.addFileData)
             .onChange(function (value) { return __awaiter(_this, void 0, void 0, function () {
@@ -7607,7 +7590,7 @@ var MetadataframeSettings = /** @class */ (function (_super) {
 
 var DEFAULT_SETTINGS = {
     mySetting: 'default',
-    defaultSavePath: '',
+    defaultSavePath: '/',
     nullValue: 'null',
     undefinedValue: 'undefined',
     addFileData: true

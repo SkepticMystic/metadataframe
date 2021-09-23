@@ -14,7 +14,7 @@ interface MyPluginSettings {
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
-	defaultSavePath: '',
+	defaultSavePath: '/',
 	nullValue: 'null',
 	undefinedValue: 'undefined',
 	addFileData: true

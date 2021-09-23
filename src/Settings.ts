@@ -14,7 +14,7 @@ export class MetadataframeSettings extends PluginSettingTab {
         let { containerEl } = this;
 
         containerEl.empty();
-        containerEl.createEl('h2', { text: 'Settings for Metadataframe.' });
+        containerEl.createEl('h2', { text: 'Settings for Metadataframe' });
 
         new Setting(containerEl)
             .setName('Default save path')
@@ -28,7 +28,7 @@ export class MetadataframeSettings extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Null value')
-            .setDesc('If a file has a field, but no value for it, what should the null value be? Default is \'null\'. You don\'t have to use quotes.')
+            .setDesc('What should the default value be for missing field values? Default is \'null\'. Don\'t use quotes, just enter the value.')
             .addText(text => text
                 .setValue(settings.nullValue)
                 .onChange(async (value) => {
@@ -37,18 +37,8 @@ export class MetadataframeSettings extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Undefined value')
-            .setDesc('If a file is missing a field (no key or value), then the plugin still has to assign it a value for that field to make the dataframe square. What value should it give to undefined field values? Default is \'undefined\'. You don\'t have to use quotes. This value can be the same as the null value above.')
-            .addText(text => text
-                .setValue(settings.undefinedValue)
-                .onChange(async (value) => {
-                    settings.undefinedValue = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
             .setName('Add inherent file metadata')
-            .setDesc('Each file has alot of inherent metadata to it (besides the fields you add). Should metadataframe add these fields too? It can be alot, so there is the option to disable this behaviour')
+            .setDesc('Each file has alot of inherent metadata to it (besides the fields you add). Should metadataframe add these fields too? It can be alot, so there is the option to disable this behaviour.')
             .addToggle(toggle => toggle
                 .setValue(settings.addFileData)
                 .onChange(async (value) => {
