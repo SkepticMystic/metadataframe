@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.7](https://github.com/SkepticMystic/metadataframe/compare/0.0.6...0.0.7) (2021-09-23)
+
+
+### Features
+
+* :sparkles: Flatten nested objects ([dd52d04](https://github.com/SkepticMystic/metadataframe/commit/dd52d04f0446d173e27486afd056e3f1d972234c))
+* :sparkles: Option to add inherent file metadata ([cd8a9d1](https://github.com/SkepticMystic/metadataframe/commit/cd8a9d1f50846949ba7df705f979b267f65457bc))
+
 ### [0.0.6](https://github.com/SkepticMystic/metadataframe/compare/0.0.5...0.0.6) (2021-09-23)
 
 
